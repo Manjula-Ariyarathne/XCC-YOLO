@@ -7,9 +7,3 @@ metrics = model.val(
     imgsz=640,
     batch=16
 )
-
-# Print key metrics
-print(f"Precision:  {metrics.box.precision:.4f}")
-print(f"Recall:     {metrics.box.recall:.4f}")
-print(f"mAP@50: {metrics.box.map50:.4f}")
-print(f"mAP@50-95: {metrics.box.map:.4f}")
