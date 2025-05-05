@@ -63,6 +63,7 @@ from ultralytics.nn.modules import (
     TorchVision,
     WorldDetect,
     v10Detect,
+    CBAM
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
@@ -84,6 +85,15 @@ from ultralytics.utils.torch_utils import (
     model_info,
     scale_img,
     time_sync,
+)
+
+from ultralytics.nn.custom_modules import (
+    CA,
+    MBH,
+    ConvCA,
+    Add,
+    TA,
+    CARAFE
 )
 
 try:
@@ -1081,10 +1091,15 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     depth, width, kpt_shape = (d.get(x, 1.0) for x in ("depth_multiple", "width_multiple", "kpt_shape"))
     if scales:
         scale = d.get("scale")
+
+        scale = "l"
+
         if not scale:
             scale = tuple(scales.keys())[0]
             LOGGER.warning(f"WARNING ⚠️ no model scale passed. Assuming scale='{scale}'.")
         depth, width, max_channels = scales[scale]
+
+    # depth, width, max_channels = 1.0, 1.0, 512
 
     if act:
         Conv.default_act = eval(act)  # redefine default activation, i.e. Conv.default_act = torch.nn.SiLU()
@@ -1131,6 +1146,8 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             SCDown,
             C2fCIB,
             A2C2f,
+            ConvCA,
+            CARAFE
         }
     )
     repeat_modules = frozenset(  # modules with 'repeat' arguments
@@ -1217,6 +1234,10 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             c2 = args[0]
             c1 = ch[f]
             args = [*args[1:]]
+        elif m is MBH:
+            c2 = 64
+        elif m is Add:
+            c2 = ch[f[0]]
         else:
             c2 = ch[f]
 
