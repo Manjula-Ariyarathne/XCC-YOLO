@@ -191,10 +191,10 @@ class CARAFE(nn.Module):
         x = x.permute(0, 2, 3, 1, 4)  # (N, H, W, C, Kup^2)
 
         out_tensor = torch.matmul(x, kernel_tensor)  # (N, H, W, C, S^2)
-        out_tensor = out_tensor.reshape(N, H, W, -1)
-        out_tensor = out_tensor.permute(0, 3, 1, 2)
-        out_tensor = F.pixel_shuffle(out_tensor, self.up_factor)
-        out_tensor = self.out(out_tensor)
+        out_tensor = out_tensor.reshape(N, H, W, -1) # (N, H, W, C * S^2)
+        out_tensor = out_tensor.permute(0, 3, 1, 2) # (N, C * S^2, H, W)
+        out_tensor = F.pixel_shuffle(out_tensor, self.up_factor) # (N, C, S*H, S*W)
+        out_tensor = self.out(out_tensor) # (N, Cout, S*H, S*W)
         return out_tensor
 
 
